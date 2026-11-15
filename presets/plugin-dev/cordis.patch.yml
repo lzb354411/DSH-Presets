@@ -7,10 +7,12 @@
 #   * 参考项目 = zqh260619/DshAgentPresetForPlugin、liupengyang-1008/dsh-plugin-development、
 #     axetroy/dsh-plugin-skills、liangdabiao/dsh-plugin-developer-skill。
 #
-# 与「创造模式」的差异只有三处，其余行逐条对齐 shipped cordis 预设：
+# 与「创造模式」的差异有四处，其余行逐条对齐 shipped cordis 预设：
 #   1. persona 换成插件开发 + 工程纪律版本；
 #   2. skill-filesystem 追加本 bundle 自带的 skills/ 目录；
-#   3. （无）——PTC 执行器与浏览器 MCP 默认都不挂载，按需在下方注释处添加。
+#   3. tool-fs 打开 applyPatch，多一个 apply_patch 工具；
+#   4. 新增 browser-playwright 行（Playwright MCP，工具名 mcp__playwright__*）。
+# PTC 执行器仍不挂载：它会把整个作用域的执行器换掉，按需在下方注释处添加。
 #
 # 升级 DSH 后请重新对照 `@deepseek-ai/dsh-web-app/presets/cordis.patch.yml`，
 # 逐行同步新增/改名/配置 schema 变化，否则预设可能无法组装会话。
@@ -73,8 +75,8 @@
           - id: tool-fs
             name: '@deepseek-ai/dsh-tool-fs'
             config:
-              # 设为 true 可在 edit 之外增加 apply_patch 工具。
-              applyPatch: false
+              # 在 edit 之外增加 apply_patch 工具（本预设默认开启）。
+              applyPatch: true
           - id: tool-fs-search
             name: '@deepseek-ai/dsh-tool-fs-search'
             config:
@@ -199,33 +201,41 @@
           - id: tool-plugin-market
             name: '@deepseek-ai/dsh-plugin-market/tools'
             disabled: !!js "!ctx.get('profileContext')"
+          # ── 浏览器验证（Playwright MCP，默认挂载） ───────────────────────────
+          # @playwright/mcp 以 stdio 方式接入，模型得到 mcp__playwright__* 工具：
+          # browser_navigate / browser_snapshot / browser_take_screenshot / browser_click 等。
+          # 本机只有系统 Edge，故用 --browser msedge；--headless 不弹窗，--isolated 每次
+          # 会话用全新 profile，避免与其他客户端争用同一份持久 profile。
+          # failOnStartupError:false：npx 首次下载慢或 Edge 启动失败时只少这些工具，
+          # 不会让整棵预设 mount 失败。要接已开的浏览器，改成 --cdp-endpoint <url>。
+          - id: browser-playwright
+            name: '@deepseek-ai/dsh-mcp-client'
+            config:
+              transport: stdio
+              serverName: playwright
+              command: npx
+              args:
+                - '-y'
+                - '@playwright/mcp@0.0.85'
+                - '--browser'
+                - 'msedge'
+                - '--headless'
+                - '--isolated'
+              failOnStartupError: false
           # ── 可选增强（默认不挂载，需要时取消注释并确认依赖可用） ─────────────
           # 1) 程序化工具调用（即「PTC 模式」的 run_code）：注意一个作用域只能有一个
-          #    执行器，启用后模型只能直接调用 run_code，其余工具变成程序内 SDK 绑定。
+          #    执行器，启用后模型只能直接调用 run_code，其余工具变成程序内 SDK 绑定；
+          #    shipped ptc 预设还会把 workflow-ptc / tool-workflow 两行一起禁用。
           # - id: tool-executor-ptc
           #   name: '@deepseek-ai/dsh-tool-executor-ptc'
           #   config:
           #     maxSubCallsPerMinute: 1024
           #     maxParallelSubCalls: 10
-          # 2) 浏览器验证（Playwright MCP，附着已用 --remote-debugging-port=9222 启动的
-          #    Chrome）：启用后可截图验证 Web 插件；需要本机有 npx 与 Playwright 缓存。
-          # - id: browser-playwright
-          #   name: '@deepseek-ai/dsh-mcp-client'
-          #   config:
-          #     transport: stdio
-          #     serverName: playwright
-          #     command: npx
-          #     args:
-          #       - '-y'
-          #       - '@playwright/mcp@0.0.80'
-          #       - '--cdp-endpoint'
-          #       - 'http://127.0.0.1:9222'
-          #       - '--cdp-timeout'
-          #       - '5000'
-          #       - '--viewport-size'
-          #       - '1920x1080'
-          #     failOnStartupError: false
-          # 3) 语言服务器（LSP）：需要先在 profile 里安装 typescript-language-server，
-          #    并确认 dsh-lsp-stdio 的 servers 配置字段。
+          # 2) 语言服务器（LSP）：DSH 0.2.2-rc.3 的安装里没有 dsh-lsp / dsh-lsp-stdio /
+          #    dsh-tool-lsp（npm 上只有 0.0.1-rc.1 这条旧版本线），预设子行解析不到包会在
+          #    mount 阶段报错。等安装内置这几个包后，先读 dsh-lsp-stdio 的 Config schema
+          #    填 servers，再取消下面两行；另需在 profile 里装 typescript-language-server。
+          # - id: lsp-stdio
+          #   name: '@deepseek-ai/dsh-lsp-stdio'
           # - id: tool-lsp
           #   name: '@deepseek-ai/dsh-tool-lsp'

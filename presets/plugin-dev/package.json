@@ -1,6 +1,6 @@
 {
   "name": "@local/dsh-plugin-dev-preset",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "Agent preset \"插件开发\" for DeepSeek Harness: Creator-mode plugin tooling plus Programming-mode engineering discipline and the Superpowers/ponytail skill library.",
   "license": "MIT",

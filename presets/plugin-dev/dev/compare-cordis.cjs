@@ -1,8 +1,8 @@
 // Drift check: compare this bundle's preset rows with the shipped Creator preset.
 // Run with the DSH Electron runtime (ASAR-aware):
 //   ELECTRON_RUN_AS_NODE=1 <DeepSeek Harness.exe> dev/compare-cordis.cjs <bundleDir> <installDir> <outFile>
-// Reports rows missing, extra, or configured differently. persona and skill-filesystem are
-// expected differences for this preset.
+// Reports rows missing, extra, or configured differently. persona, skill-filesystem,
+// tool-fs (applyPatch) and browser-playwright (Playwright MCP) are expected differences.
 'use strict';
 
 const fs = require('node:fs');
@@ -35,17 +35,19 @@ const shippedFile = Module.createRequire(path.join(installDir, 'package.json'))
   .resolve('@deepseek-ai/dsh-web-app/presets/cordis.patch.yml');
 const ours = load(path.join(bundleDir, 'cordis.patch.yml'));
 const shipped = load(shippedFile);
-const expected = new Set(['persona', 'skill-filesystem']);
+const expected = new Set(['persona', 'skill-filesystem', 'tool-fs', 'browser-playwright']);
 const lines = [];
 
 for (const [id, row] of shipped) {
   if (!ours.has(id)) {
-    lines.push(`MISSING  ${id} (${row.name})`);
+    const label = expected.has(id) ? 'EXPECTED missing' : 'MISSING ';
+    lines.push(`${label} ${id} (${row.name})`);
   }
 }
 for (const [id, row] of ours) {
   if (!shipped.has(id)) {
-    lines.push(`EXTRA    ${id} (${row.name})`);
+    const label = expected.has(id) ? 'EXPECTED extra  ' : 'EXTRA   ';
+    lines.push(`${label} ${id} (${row.name})`);
   }
 }
 for (const [id, row] of ours) {

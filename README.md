@@ -23,7 +23,7 @@
 
 1. **插件** 页出现「插件开发预设」/「编程模式预设」，bundle 与预设行都显示激活；
 2. 新建会话并选择对应模式；
-3. 插件开发：会话具备 `cordis_inspect_list` / `cordis_inspect_query`、`plugin_manager`、`skill`、`subagent`、`workflow` 等工具；
+3. 插件开发：会话具备 `cordis_inspect_list` / `cordis_inspect_query`、`plugin_manager`、`skill`、`subagent`、`workflow`、`apply_patch`、`mcp__playwright__*` 等工具；
 4. 编程模式：开场包含「编程模式 (Programming Mode)」九条纪律，具备 `pwsh`、`skill`、`subagent`、`workflow`、`schedule`、Office、`present` 等工具；
 5. 技能目录：插件开发 23 个（官方 `dsh-doc` + 22 个自带），编程模式 22 个（官方 `dsh-doc` + 21 个自带）。
 
@@ -60,7 +60,7 @@ LICENSE
 详见各 bundle 的 README。共性限制：
 
 - 预设子行只能解析 DSH 安装内的包，解析不到 profile 里安装的 bundle；技能目录用 `profileContext` 定位并保留回退。
-- 本仓库不内置浏览器验证与 PTC 执行器；需要时在插件开发预设的 `cordis.patch.yml` 注释处按需启用。
+- 本仓库不内置 PTC 执行器与 LSP；需要时在插件开发预设的 `cordis.patch.yml` 注释处按需启用（LSP 还要求安装版本里内置 `dsh-lsp*` 包）。浏览器验证已默认内置（Playwright MCP + 系统 Edge）。
 - 两个预设都不会把默认模式改成自己。
 
 ## 授权与致谢

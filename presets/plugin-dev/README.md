@@ -14,9 +14,9 @@
 |---|---|
 | 创造模式（内置 `cordis` 预设） | shell（bash/pwsh）、文件读写与检索、后台任务、定时任务、goals、计划模式、上下文压缩、subagent / subagent_fork、workflow、ask_user、todo、web、present、运行时探查（`cordis_inspect_list/query`）、官方 `dsh-doc` 技能、插件管理与插件市场工具 |
 | 编程模式（自定义 `programming` 预设） | 九条工程纪律（技能优先、先设计、先计划、先定验证、系统化调试、完成前验证、评审收尾、中文交付、Ponytail 代码体量克制）、Superpowers 15 个技能、ponytail 6 个技能 |
-| 本仓库新增 | 第 10 条「插件开发不变量」、自带技能根（含 `dsh-plugin-dev-playbook`）、`engines.dsh` 版本闸门、可选 PTC / 浏览器 MCP / LSP 的注释位 |
+| 本仓库新增 | 第 10 条「插件开发不变量」、自带技能根（含 `dsh-plugin-dev-playbook`）、`engines.dsh` 版本闸门、默认开启的 `apply_patch` 与浏览器验证（Playwright MCP + 系统 Edge）、可选 PTC / LSP 的注释位 |
 
-与「创造模式」的差异只有两处：`persona` 的内容、`skill-filesystem` 多一个技能根。其余插件行逐条对齐 DSH **0.2.2-rc.3** 的 `@deepseek-ai/dsh-web-app/presets/cordis.patch.yml`。
+与「创造模式」的差异有四处：`persona` 的内容、`skill-filesystem` 多一个技能根、`tool-fs` 打开 `applyPatch`（多一个 `apply_patch` 工具）、新增 `browser-playwright`（Playwright MCP）。其余插件行逐条对齐 DSH **0.2.2-rc.3** 的 `@deepseek-ai/dsh-web-app/presets/cordis.patch.yml`。
 
 ## 安装
 
@@ -43,11 +43,16 @@ CLI 只完成包安装；还要在 **插件** 页把该捆绑包选中（bundle 
 
 1. **插件** 页出现「插件开发预设」，bundle 与预设行都显示激活状态；
 2. 新建会话并选择「插件开发」；
-3. 会话应具备 `cordis_inspect_list` / `cordis_inspect_query`、`plugin_manager`、`skill`、`subagent`、`workflow` 等工具；
+3. 会话应具备 `cordis_inspect_list` / `cordis_inspect_query`、`plugin_manager`、`skill`、`subagent`、`workflow`、`apply_patch`，以及 `mcp__playwright__*`（浏览器）等工具；
 4. 让 Agent 调用一次 `cordis_inspect_list`，确认运行时探查可用；
-5. 让 Agent 打开技能目录，确认能看到 `dsh-doc`、`using-superpowers`、`dsh-plugin-dev-playbook` 等 23 个技能（官方 1 个 + 自带 22 个）。
+5. 让 Agent 用 `mcp__playwright__browser_navigate` 打开 `http://127.0.0.1:<端口>` 再 `browser_take_screenshot`，确认浏览器验证可用（首次调用要等 npx 拉取 `@playwright/mcp`）；
+6. 让 Agent 打开技能目录，确认能看到 `dsh-doc`、`using-superpowers`、`dsh-plugin-dev-playbook` 等 23 个技能（官方 1 个 + 自带 22 个）。
 
 ### 本地实测记录（2026-11-15，DSH 0.2.2-rc.3，desktop profile）
+
+- bundle `0.1.3`：在 0.1.2 基础上打开 `applyPatch`、新增 `browser-playwright`（`@playwright/mcp@0.0.85` + 系统 Edge + `--headless --isolated`）；
+- MCP 独立冒烟通过：`npx -y @playwright/mcp@0.0.85 --browser msedge --headless --isolated` 完成 `initialize` / `tools/list`（25 个工具）/ `browser_navigate` / `browser_take_screenshot`；
+- 未挂载：PTC 执行器、LSP（本安装无 `dsh-lsp*` 包）、bash（host 平面执行器被禁用且本机无 `bash.exe`）。
 
 - bundle `0.1.2` 已安装，依赖来源为 `file:<插件源目录>/local-dsh-plugin-dev-preset-0.1.2.tgz`（实装区副本，不指向开发区）；
 - `plugin_manager list_plugins` 中 `include:preset-plugin-dev` 为 `enabled: true`、`fiberPhase: active`；
@@ -68,8 +73,8 @@ CLI 只完成包安装；还要在 **插件** 页把该捆绑包选中（bundle 
 - **预设子行只能解析 DSH 安装内的包**，解析不到 profile 里安装的本 bundle；因此本 bundle 自带的模块不能直接作为预设行 `name`。
 - 未移植「编程模式」的 `force-superpowers` 首步强制注入：该行依赖 preset 目录外的 `force-superpowers.mjs`，与「bundle 自包含」冲突。纪律改由 persona 强制，技能在目录里可随时用 `skill` 加载。
 - 技能根的定位依赖 `profileContext`。安装方式改变导致定位失败时会退化为只加载官方 `dsh-doc`（不会中断会话）。
-- 未内置浏览器验证；需要截图验证 Web 插件时，取消 `cordis.patch.yml` 末尾 `browser-playwright` 注释（要求 Chrome 以 `--remote-debugging-port=9222` 启动）。
-- 未内置 PTC 执行器；需要 `run_code` 时取消对应注释，注意启用后工具调用形态整体改变。
+- 浏览器验证默认用系统 Edge（`--browser msedge`）+ headless + 全新 profile，不依赖 Chrome 或 Playwright 浏览器缓存；要接已开浏览器或换 Chrome，改 `browser-playwright` 的 `args`（`--cdp-endpoint` / `--browser chrome`）。首次启动要等 npx 拉取 `@playwright/mcp`，`failOnStartupError: false` 保证拉取失败只少这些工具、不影响整棵预设。
+- 未内置 PTC 执行器：它会替换整个作用域的执行器（`run_code` 成为唯一直接工具），需要时取消注释并同时禁用 workflow 两行。LSP 与 bash 也挂不上：前者在 0.2.2-rc.3 的安装里没有 `dsh-lsp*` 包，后者执行器在 host 平面且本机没有 `bash.exe`。
 - 本预设不会把默认模式改成自己；新会话默认仍是「标准模式」。
 - Web 预设编辑器保存的修改会写进 profile 的 `cordis.patch.yml`，按行 id `preset-plugin-dev` 覆盖；优先改 bundle 再重装，避免两处不一致。
 
