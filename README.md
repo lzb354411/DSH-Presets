@@ -41,6 +41,7 @@ presets/
     package.json
     locale/  skills/  icon.svg
     README.md  SKILLS-LICENSE.md  LICENSE
+docs/                  # 验证报告与运维记录
 README.md
 LICENSE
 ```

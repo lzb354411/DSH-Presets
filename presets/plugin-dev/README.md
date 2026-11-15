@@ -50,15 +50,14 @@ CLI 只完成包安装；还要在 **插件** 页把该捆绑包选中（bundle 
 
 ### 本地实测记录（2026-11-15，DSH 0.2.2-rc.3，desktop profile）
 
-- bundle `0.1.3`：在 0.1.2 基础上打开 `applyPatch`、新增 `browser-playwright`（`@playwright/mcp@0.0.85` + 系统 Edge + `--headless --isolated`）；
+- bundle `0.1.3`（当前实装）：在 0.1.2 基础上打开 `applyPatch`、新增 `browser-playwright`（`@playwright/mcp@0.0.85` + 系统 Edge + `--headless --isolated`）；
+- `0.1.3` 安装方式：`plugin_manager install_bundle`，tgz 取自插件源目录（profile 依赖是 `file:` 指向实装区副本，不指向开发区）；装后 `package.json`、`cordis.patch.yml`、`locale/*.json`、`icon.svg` 与仓库源码 SHA256 全一致，`skills/` 22 个；
 - MCP 独立冒烟通过：`npx -y @playwright/mcp@0.0.85 --browser msedge --headless --isolated` 完成 `initialize` / `tools/list`（25 个工具）/ `browser_navigate` / `browser_take_screenshot`；
-- 未挂载：PTC 执行器、LSP（本安装无 `dsh-lsp*` 包）、bash（host 平面执行器被禁用且本机无 `bash.exe`）。
-
-- bundle `0.1.2` 已安装，依赖来源为 `file:<插件源目录>/local-dsh-plugin-dev-preset-0.1.2.tgz`（实装区副本，不指向开发区）；
-- `plugin_manager list_plugins` 中 `include:preset-plugin-dev` 为 `enabled: true`、`fiberPhase: active`；
-- 安装目录验证：`cordis.patch.yml`、`locale/zh.json`、`icon.svg`、`README.md`、`skills/` 共 22 个技能均存在；
-- 与内置「创造模式」逐行对比（32 个条目）：仅 `persona` 与 `skill-filesystem` 两处差异，符合设计；
-- 尚未验证：**新会话中选择「插件开发」后的实际工具目录与技能目录**——这需要你新开一个会话确认（见上方步骤 2–5）。
+- 未挂载：PTC 执行器、LSP（本安装无 `dsh-lsp*` 包）、bash（host 平面执行器被禁用且本机无 `bash.exe`）；
+- 与内置「创造模式」逐行对比（`dev/compare-cordis.cjs`，0.1.3）：内置 32 行 / 本预设 33 行，差异为新增 `browser-playwright` 与 `persona`、`tool-fs`、`skill-filesystem` 三处 config，均符合设计；
+- bundle `0.1.2`（历史）：已安装并实测——`plugin_manager list_plugins` 中 `include:preset-plugin-dev` 为 `enabled: true`、`fiberPhase: active`；切到「插件开发」的新会话里 persona、技能目录（23 个）与工具面全部生效，详见 [`docs/verify-plugin-dev-20261115.md`](../../docs/verify-plugin-dev-20261115.md)；
+- 尚未验证：**0.1.3 新会话的工具面**（`apply_patch` 与 `mcp__playwright__*`）——需在插件页确认 bundle 激活后新建会话确认（见上方步骤 3、5）。
+- 历史事故：0.1.3 首次升级时因 DSH 运行中覆盖安装触发 `ERR_PNPM_EPERM`，导致包目录被清空、预设报「包不可用」；处理与恢复步骤见下方「运维记录」。
 
 ## 升级 DSH 之后
 
@@ -90,6 +89,15 @@ CLI 只完成包安装；还要在 **插件** 页把该捆绑包选中（bundle 
 - 生效：profile patch 由 HMR 热重载；若模式列表仍报错，重启 DSH 后新开会话验证。
 - 注意：`force-superpowers.mjs` 已无引用，文件仍在预设目录，不要再挂回该行，除非补回 `declaration.mjs` 并解决孤儿清理；重装 `@ziduup/dsh-programming-mode` 会重新写回声明行。
 - 仍与 standard 有差异（非故障）：`tool-fs` 未设 `applyPatch: false`、`tool-subagent-control` 未设 `interrupt: false`；首步自动注入已移除，由 persona 纪律承担。
+
+### 2026-11-15 运行中覆盖安装触发 EPERM，导致「包不可用」
+
+- 现象：插件页「插件开发模式」显示未运行、包不可用，报 `dsh cannot resolve profile bundle "@local/dsh-plugin-dev-preset"`。
+- 根因：DSH 运行中执行 `install_bundle`（0.1.2 → 0.1.3）时，pnpm 要把暂存目录改名覆盖旧包目录，Windows 下被占用文件顶住 → `ERR_PNPM_EPERM`；失败后旧目录内容被清空（只剩空目录），而 profile 的 `package.json` 与 `dsh.profile.bundles` 仍声明该 bundle → 解析失败。
+- 处理：确认残留目录已空并移除后，对插件源目录里的 tgz 再跑一次 `plugin_manager install_bundle`；本次在 DSH 运行中一次成功（`application: applied`），无需退出程序。
+- 恢复要点：① 装前确认 `node_modules/@local/<包名>` 可被替换（存在且被占用就先完全退出 DSH，含托盘）；② 装后 `package.json` 依赖应指向插件源目录的 tgz、`pnpm-lock.yaml` 同步更新；③ 重试前不要留下半空的包目录，否则 pnpm 仍会卡在改名这一步。
+- 备份与回退：装前把 profile 的 `package.json`、`pnpm-lock.yaml` 备份为 `*.bak-<时间戳>`；回退即覆盖回这两个文件并重装旧 tgz。
+- 校验：`node_modules/@local/dsh-plugin-dev-preset/package.json` 版本为 `0.1.3`；`skills/` 22 个；`cordis.patch.yml` 含 `browser-playwright` 与 `applyPatch: true`；关键文件与仓库源码 SHA256 一致。
 
 ## 目录结构
 
