@@ -1,9 +1,9 @@
 # 插件开发预设可用性验证报告
 
 - 测试时间：2026-11-15 19:03–19:45（Asia/Shanghai）
-- 测试会话：`session-1449509b-f440-4c19-81ee-a736fec9b076`（本会话，模式「插件开发」）
-- 运行版本：DSH `0.2.2-rc.3`｜Profile `desktop`｜`DSH_HOME=C:\Users\14544\.dsh`
-- 工作区：`E:\2-agent-hub\DSH-预设-插件开发预设`（仓库 `main`，测试前工作树干净）
+- 测试会话：本会话（模式「插件开发」），会话 id 从略
+- 运行版本：DSH `0.2.2-rc.3`｜Profile `desktop`｜`DSH_HOME=%USERPROFILE%\.dsh`
+- 工作区：`<仓库根>`（仓库 `main`，测试前工作树干净）
 
 ## 1. 结论
 
@@ -13,14 +13,14 @@
 
 1. `plugin_manager list_plugins`：`include:preset-plugin-dev` → `enabled: true`、`fiberPhase: active`。
 2. 会话日志事件 `agent-preset/selected`（seq=5）记录 `{"agentPreset":"plugin-dev"}`，随后注入的系统提示词即本 bundle 的 11 条纪律（含第 10 条「插件开发不变量」）。
-3. 技能实际从 `C:\Users\14544\.dsh\profiles\desktop\node_modules\@local\dsh-plugin-dev-preset\skills\using-superpowers` 加载 —— `profileContext` 技能根解析成功，没有退化成回退路径。
+3. 技能实际从 `%USERPROFILE%\.dsh\profiles\desktop\node_modules\@local\dsh-plugin-dev-preset\skills\using-superpowers` 加载 —— `profileContext` 技能根解析成功，没有退化成回退路径。
 
 ## 2. 实装状态
 
 | 项 | 实测值 |
 |---|---|
 | bundle | `@local/dsh-plugin-dev-preset@0.1.2` |
-| 依赖来源 | `file:C:/Users/14544/.dsh/plugin-sources/dsh-plugin-dev-preset/local-dsh-plugin-dev-preset-0.1.2.tgz` |
+| 依赖来源 | `file:%USERPROFILE%/.dsh/plugin-sources/dsh-plugin-dev-preset/local-dsh-plugin-dev-preset-0.1.2.tgz` |
 | 安装形态 | profile `node_modules` 下的解包副本（无符号链接），符合「产物区打包 → 实装区安装」 |
 | 是否选中 | profile `package.json` 的 `dsh.profile.bundles` 含该 bundle |
 | 与开发区一致性 | `package.json`、`cordis.patch.yml`、`locale/zh.json`、`locale/en.json`、`icon.svg` 五份 SHA256 全部相同 |
@@ -103,7 +103,7 @@
 ## 6. 复现命令（PowerShell 7+）
 
 ```powershell
-$bundle = 'E:\2-agent-hub\DSH-预设-插件开发预设\presets\plugin-dev'
+$bundle = '<仓库根>\presets\plugin-dev'
 $exe = "$env:LOCALAPPDATA\Programs\DeepSeek Harness\DeepSeek Harness.exe"
 
 # 安装自检（只读）
@@ -122,4 +122,12 @@ $p.StandardOutput.ReadToEnd(); $p.WaitForExit(); "exit=$($p.ExitCode)"
 
 ## 7. 建议（未执行）
 
-- `presets/plugin-dev/README.md` 的「本地实测记录」仍写着「尚未验证：新会话中选择插件开发后的实际工具目录与技能目录」。本次已补齐该验证，可把该条改成已验证并链接本报告。
+- `presets/plugin-dev/README.md` 的「本地实测记录」仍写着「尚未验证：新会话中选择插件开发后的实际工具目录与技能目录」。本次已补齐该验证，可把该条改成已验证并链接本报告。（已于 2026-11-15 更新）
+
+## 8. 后续：0.1.3 升级与一次 EPERM 事故（2026-11-15 19:25）
+
+- 事故：19:15 / 19:17 两次在 DSH 运行中 `install_bundle` 由 0.1.2 升 0.1.3，pnpm 改名覆盖旧包目录时被占用文件顶住 → `ERR_PNPM_EPERM`；旧目录被清空，profile 声明仍在 → 插件页「插件开发模式」显示未运行、包不可用。
+- 修复：移除残留空目录后，对插件源目录内的 tgz 再次 `plugin_manager install_bundle`；在 DSH 运行中一次成功（`application: applied`，pnpm 用 4.9 s）。
+- 落盘校验：实装版本 `0.1.3`；`skills/` 22 个；`cordis.patch.yml` 含 `id: browser-playwright`、`@playwright/mcp`、`applyPatch: true`；`package.json`、`cordis.patch.yml`、`locale/zh.json`、`locale/en.json`、`icon.svg` 与仓库源码 SHA256 全一致。
+- 行对比（`dev/compare-cordis.cjs`）：内置 32 行 / 本预设 33 行，差异为新增 `browser-playwright`，以及 `persona`、`tool-fs`、`skill-filesystem` 三处 config 变化（均为设计内）。
+- 未验证：0.1.3 新会话的工具面（`apply_patch` 与 `mcp__playwright__*`）——需在插件页确认 bundle 处于激活后新建会话确认。
