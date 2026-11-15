@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+  <defs>
+    <linearGradient id="dshPluginDevGradient" x1="6" y1="5" x2="31" y2="31" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4C8DFF"/>
+      <stop offset="1" stop-color="#2456C4"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#dshPluginDevGradient)" fill-rule="evenodd" d="M7 5 H15 A3 3 0 0 1 21 5 H29 A2 2 0 0 1 31 7 V15 A3 3 0 0 1 31 21 V29 A2 2 0 0 1 29 31 H7 A2 2 0 0 1 5 29 V7 A2 2 0 0 1 7 5 Z M20.4 18 A2.4 2.4 0 1 1 15.6 18 A2.4 2.4 0 1 1 20.4 18 Z"/>
+</svg>

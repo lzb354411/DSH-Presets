@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Programming mode preset",
+    "description": "Adds a 编程模式 agent mode: the standard full coding agent plus Superpowers engineering discipline (skills-first, design, plans, TDD, systematic debugging, verification before completion, code review, Chinese documentation, Ponytail code-volume restraint) and the bundled Superpowers/ponytail skill library. Enable the bundle, then start a new session and pick 编程模式."
+  }
+}

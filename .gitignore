@@ -1,0 +1,30 @@
+# 依赖与构建产物
+node_modules/
+dist/
+*.tgz
+backup/
+
+# 本机临时诊断（不属于仓库）
+/dev/diag*/
+
+# 本地备份与临时文件
+*.bak*
+*.tmp
+*.log
+
+# 密钥与凭据
+.env
+.env.*
+*.key
+*.pem
+*credential*
+*token*
+.npmrc
+.pypirc
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/

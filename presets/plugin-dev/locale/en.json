@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Plugin development preset",
+    "description": "Adds a 插件开发 agent mode: Creator-mode plugin tooling plus Programming-mode engineering discipline and the Superpowers/ponytail skill library, for designing, building, installing, and verifying DSH plugins, bundles, and presets. Enable the bundle, then start a new session and pick 插件开发."
+  }
+}

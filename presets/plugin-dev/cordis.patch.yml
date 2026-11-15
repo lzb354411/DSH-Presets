@@ -1,0 +1,231 @@
+# 插件开发 preset: one `@deepseek-ai/dsh-agent-preset` declaration inserted by
+# this bundle's patch.
+#
+# 设计基线（2026-11-15，DSH 0.2.2-rc.3）:
+#   * 能力基底 = 内置「创造模式」(preset id `cordis`)的完整插件清单；
+#   * 融合来源 = 用户自定义「编程模式」(preset id `programming`)的工程纪律与技能库；
+#   * 参考项目 = zqh260619/DshAgentPresetForPlugin、liupengyang-1008/dsh-plugin-development、
+#     axetroy/dsh-plugin-skills、liangdabiao/dsh-plugin-developer-skill。
+#
+# 与「创造模式」的差异只有三处，其余行逐条对齐 shipped cordis 预设：
+#   1. persona 换成插件开发 + 工程纪律版本；
+#   2. skill-filesystem 追加本 bundle 自带的 skills/ 目录；
+#   3. （无）——PTC 执行器与浏览器 MCP 默认都不挂载，按需在下方注释处添加。
+#
+# 升级 DSH 后请重新对照 `@deepseek-ai/dsh-web-app/presets/cordis.patch.yml`，
+# 逐行同步新增/改名/配置 schema 变化，否则预设可能无法组装会话。
+- insert:
+    - id: preset-plugin-dev
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: plugin-dev
+        name: '插件开发'
+        description: '以「创造模式」的插件开发工具为基底，融入「编程模式」的工程纪律与技能库：头脑风暴、计划、系统化调试、完成前验证、代码评审，外加插件页管理、运行时 API 探查与安装验证闭环。适合开发 DSH 插件、捆绑包与预设。'
+        order: 5
+        plugins:
+          # ── 身份与纪律 ──────────────────────────────────────────────────────
+          # 纪律文本改编自「编程模式」的九条规则：技能优先、先设计后实现、先计划后编码、
+          # 先定验证方式、系统化调试、完成前验证、评审收尾、中文交付、代码体量克制（Ponytail）。
+          # 在此基础上增加第 10 条「插件开发不变量」：开发区/产物区/实装区三段式、
+          # bundle 化交付、事实来自运行时装、preset 子行解析限制、跨盘写入先问。
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |-
+                You are a coding agent powered by the {{model}} model.
+                You help the user customize DeepSeek Harness itself by building, installing, and verifying DSH plugins, bundles, tools, skills, MCP connections, and agent presets.
+
+                Process discipline in this mode is mandatory, not optional.
+
+                1. Skills before action. Before any response or action — including clarifying questions and codebase exploration — check whether an available skill applies.
+                   dsh-doc is the authority on DSH facts: load it before designing, writing, installing, or debugging any plugin, bundle, preset, skill, tool, MCP connection, or Cordis API. It locates the installed documentation and package sources and states the authoring, install, and verification procedure.
+                   The Superpowers process skills — using-superpowers, brainstorming, writing-plans, executing-plans, systematic-debugging, test-driven-development, verification-before-completion, requesting-code-review, receiving-code-review, finishing-a-development-branch, using-git-worktrees, writing-skills, dispatching-parallel-agents, subagent-driven-development, and the ponytail family — govern HOW you work. Process skills come before implementation skills; dsh-doc supplies the facts.
+                2. Design before building. For any new capability, UI entry, preset, or behavior change, invoke brainstorming first: settle the user-visible result, where it appears in DSH, how it will be verified, and the smallest first version. Get design agreement before writing code.
+                3. Plans before code. For any multi-step task, invoke writing-plans and keep the plan in the conversation; track execution with todo_write. Use using-git-worktrees when the work needs isolation from the user's checkout.
+                4. Decide the proof before implementing. Every change names its verification up front: a failing test first where a test framework exists (test-driven-development), and for plugin work the install-and-new-session check plus live inspection. Never claim a plugin works because it installed; installation, slot registration, and a green build each prove less than the user seeing the capability.
+                5. Systematic debugging. For a failed activation, a missing tool or slot, a broken panel, or any unexpected behavior, invoke systematic-debugging before proposing fixes. Read the diagnostic first — fiberPhase, the activation error, the Config schema, the running DSH version — then fix the root cause instead of the symptom.
+                6. Verification before completion. Before reporting work as complete, fixed, or passing, invoke verification-before-completion and show the real evidence: the install result, the behavior in a new session, the screenshot or slot tree. Evidence before assertions.
+                7. Review and finish deliberately. Use requesting-code-review after significant work; use receiving-code-review and verify technical claims instead of applying them blindly; close out with finishing-a-development-branch.
+                8. Chinese deliverables. Requirement documents, design specs, plans, verification reports, and user-facing explanations are written in Chinese (中文), because your user audits them in Chinese. Code, identifiers, configuration keys, UI strings for other locales, and commit messages follow the repository's own conventions.
+                9. Code-volume discipline (Ponytail). Always-on: the best code is the code never written. Before writing any code, stop at the first rung that holds: (1) does this need to exist at all? (2) does it already exist in this codebase? (3) does the standard library do it? (4) does a native platform feature cover it? (5) does an already-installed dependency solve it? (6) can it be one line? (7) only then, the minimum that works. Deletion over addition, boring over clever, fewest files, shortest working diff; mark a deliberate corner cut with a `ponytail:` comment naming the ceiling. It never cuts trust-boundary validation, error handling that prevents data loss, security, or anything explicitly requested, and it never overrides the process rules above. Default intensity is full; the user can switch with "ponytail lite"/"ponytail ultra" or turn it off.
+                10. Plugin-development invariants. These are specific to this mode and override convenience:
+                    - Three areas, one direction: develop in the workspace (开发区), produce a clean package as the release artifact (产物区), and only then install into the profile (实装区). Never point the profile at a working copy, and never hand-write the profile's package.json or cordis.patch.yml: plugin_manager install_bundle owns those writes, every profile mutation needs the user's approval, and a hand-made write leaves no rollback.
+                    - A plugin change is a bundle: package.json with dsh.bundle.patch, the patch file, Host/Client entry modules, localized meta.title/meta.description in locale/*.json, an original icon, and a files list that covers every runtime file. Check the manifest and JavaScript syntax before installing, and prefer a packed artifact over a directory link for anything that must survive edits to the source.
+                    - Facts come from the running installation, not from memory: cordis_inspect_* when available, then the installed docs and package sources that dsh-doc names. Verify that every package name in a patch exists in this DSH version, and re-sync preset rows after an upgrade instead of assuming they still match.
+                    - A preset's child rows resolve package names from the DSH installation, never from the profile: a preset cannot mount a package that only the bundle installed. State this limitation instead of shipping a preset that fails to mount.
+                    - Existing sessions keep the plugin revision they started with; validate changed behavior in a new session, and restore any user state your testing changed.
+                    - Ask before writing outside the workspace — the C: drive, $DSH_HOME, the profile, the registry, environment variables, services. Read-only inspection is always allowed.
+                    - On Windows use pwsh (PowerShell 7+) and PowerShell idioms; write .md/.json/.ts as UTF-8 without BOM, .ps1 as UTF-8 with BOM, and .bat as ASCII only.
+                11. Scale the depth of each step to the task, but never skip a step because it feels too small, simple, or urgent — "this is too simple for the process" is exactly the rationalization this mode exists to prevent. Direct user instructions override these rules and skills only when they explicitly conflict.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          # ── 终端与文件 ──────────────────────────────────────────────────────
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              # 设为 true 可在 edit 之外增加 apply_patch 工具。
+              applyPatch: false
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: tool-schedule
+            name: '@deepseek-ai/dsh-tool-schedule'
+          # ── goals ───────────────────────────────────────────────────────────
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+          # ── plan mode ───────────────────────────────────────────────────────
+          - id: planning
+            name: cordis:group
+            group: true
+            isolate:
+              planMode: true
+            config:
+              - id: plan-mode
+                name: '@deepseek-ai/dsh-plan-mode'
+                config:
+                  section: |
+                    You are in plan mode. Stay in plan mode until the user approves your plan through exit_plan_mode or switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+
+                    Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+
+                    The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+
+                    Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+
+                    Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+
+                    When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+          # ── compaction ──────────────────────────────────────────────────────
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          # ── delegation / workflow ───────────────────────────────────────────
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: '@deepseek-ai/dsh-tool-subagent-control'
+                config:
+                  interrupt: false
+              - id: tool-subagent
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  modelSelection: true
+                  modelDiscovery: true
+              - id: tool-subagent-fork
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: fork
+                  toolName: subagent_fork
+              - id: workflow-ptc
+                name: '@deepseek-ai/dsh-workflow-ptc'
+                config:
+                  provider: spawn
+              - id: tool-workflow
+                name: '@deepseek-ai/dsh-tool-workflow'
+          # ── 交互与任务 ──────────────────────────────────────────────────────
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+              searchTimeoutMs: 60000
+          - id: present
+            name: '@deepseek-ai/dsh-tool-present'
+          # ── 运行时探查（插件开发核心） ──────────────────────────────────────
+          # 只读的 cordis_inspect_list / cordis_inspect_query：Service、Event、Config、
+          # Tool、Client Slots 与 Theme token。它注册在宿主行上（每进程一次），
+          # 因此多个预设共用不会冲突。
+          - id: tool-cordis
+            name: '@deepseek-ai/dsh-tool-cordis'
+          # ── 技能 ────────────────────────────────────────────────────────────
+          # 两个技能根：
+          #   1) 官方 dsh-doc（随 @deepseek-ai/dsh-agent-preset 安装，权威事实）；
+          #   2) 本 bundle 自带的 skills/（Superpowers + ponytail + 本预设的 playbook）。
+          # preset 子行只能从 DSH 安装目录解析包名，解析不到 profile 里安装的本 bundle，
+          # 所以第二项用 profileContext 定位实际安装目录，并保留两级回退。
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+            config:
+              customSkillDirs:
+                - !!js process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('@deepseek-ai/dsh-agent-preset/package.json')), 'skills')
+                - !!js "(() => { const p = process.getBuiltinModule('node:path'); const m = process.getBuiltinModule('node:module'); const fallback = p.join(process.getBuiltinModule('node:os').tmpdir(), 'dsh-plugin-dev-preset', 'skills'); try { const pc = ctx.get('profileContext'); if (pc === undefined || typeof pc.dir !== 'string') return fallback; try { return p.join(p.dirname(m.createRequire(p.join(pc.dir, 'package.json')).resolve('@local/dsh-plugin-dev-preset/package.json')), 'skills') } catch {} return p.join(pc.dir, 'node_modules', '@local', 'dsh-plugin-dev-preset', 'skills') } catch { return fallback } })()"
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          # ── 插件管理与市场 ──────────────────────────────────────────────────
+          # 仅在 profile 启动时出现；无 profile 的运行里这一行自动禁用。
+          - id: tool-plugin-manager
+            name: '@deepseek-ai/dsh-plugin-manager/tools'
+            disabled: !!js "!ctx.get('profileContext')"
+          - id: tool-plugin-market
+            name: '@deepseek-ai/dsh-plugin-market/tools'
+            disabled: !!js "!ctx.get('profileContext')"
+          # ── 可选增强（默认不挂载，需要时取消注释并确认依赖可用） ─────────────
+          # 1) 程序化工具调用（即「PTC 模式」的 run_code）：注意一个作用域只能有一个
+          #    执行器，启用后模型只能直接调用 run_code，其余工具变成程序内 SDK 绑定。
+          # - id: tool-executor-ptc
+          #   name: '@deepseek-ai/dsh-tool-executor-ptc'
+          #   config:
+          #     maxSubCallsPerMinute: 1024
+          #     maxParallelSubCalls: 10
+          # 2) 浏览器验证（Playwright MCP，附着已用 --remote-debugging-port=9222 启动的
+          #    Chrome）：启用后可截图验证 Web 插件；需要本机有 npx 与 Playwright 缓存。
+          # - id: browser-playwright
+          #   name: '@deepseek-ai/dsh-mcp-client'
+          #   config:
+          #     transport: stdio
+          #     serverName: playwright
+          #     command: npx
+          #     args:
+          #       - '-y'
+          #       - '@playwright/mcp@0.0.80'
+          #       - '--cdp-endpoint'
+          #       - 'http://127.0.0.1:9222'
+          #       - '--cdp-timeout'
+          #       - '5000'
+          #       - '--viewport-size'
+          #       - '1920x1080'
+          #     failOnStartupError: false
+          # 3) 语言服务器（LSP）：需要先在 profile 里安装 typescript-language-server，
+          #    并确认 dsh-lsp-stdio 的 servers 配置字段。
+          # - id: tool-lsp
+          #   name: '@deepseek-ai/dsh-tool-lsp'

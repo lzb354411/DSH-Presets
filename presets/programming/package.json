@@ -1,0 +1,31 @@
+{
+  "name": "@local/dsh-programming-preset",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent preset \"编程模式\" for DeepSeek Harness: the standard full coding agent plus Superpowers engineering discipline and the Superpowers/ponytail skill library.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "dsh": ">=0.2.2-rc.3"
+  },
+  "exports": {
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./skills/*": "./skills/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "skills",
+    "SKILLS-LICENSE.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

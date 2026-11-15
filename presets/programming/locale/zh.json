@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "编程模式预设",
+    "description": "为 DeepSeek Harness 增加「编程模式」：在标准模式全部能力之上强制执行 Superpowers 工程纪律（技能优先、先设计、先计划、TDD、系统化调试、完成前验证、评审收尾、中文文档、Ponytail 代码体量克制），并随包分发 Superpowers/ponytail 技能库。启用本捆绑包后，新建会话时选择「编程模式」即可。"
+  }
+}

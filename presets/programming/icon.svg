@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+  <defs>
+    <linearGradient id="dshProgrammingGradient" x1="6" y1="5" x2="31" y2="31" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2EC4B6"/>
+      <stop offset="1" stop-color="#2456C4"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="28" height="28" rx="7" fill="url(#dshProgrammingGradient)"/>
+  <path d="M13.5 12.5 8.5 18l5 5.5" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M22.5 12.5 27.5 18l-5 5.5" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M19.8 10.5 16.2 25.5" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
+</svg>

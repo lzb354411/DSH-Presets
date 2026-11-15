@@ -1,0 +1,31 @@
+{
+  "name": "@local/dsh-plugin-dev-preset",
+  "version": "0.1.2",
+  "private": true,
+  "description": "Agent preset \"插件开发\" for DeepSeek Harness: Creator-mode plugin tooling plus Programming-mode engineering discipline and the Superpowers/ponytail skill library.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "dsh": ">=0.2.2-rc.3"
+  },
+  "exports": {
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./skills/*": "./skills/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "skills",
+    "SKILLS-LICENSE.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
